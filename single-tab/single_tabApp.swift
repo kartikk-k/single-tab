@@ -20,7 +20,15 @@ struct single_tabApp: App {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        if let window = NSApplication.shared.windows.first {
+        applyWindowAppearance()
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        applyWindowAppearance()
+    }
+
+    private func applyWindowAppearance() {
+        NSApp.windows.forEach { window in
             // Configure the window
             window.titlebarAppearsTransparent = true
             window.titleVisibility = .hidden

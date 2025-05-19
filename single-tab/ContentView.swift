@@ -130,6 +130,7 @@ struct URLTextField: View {
 struct URLBarView: View {
     @Binding var urlString: String
     @Binding var isLoading: Bool
+    @Binding var isPinned: Bool
     var onNavigate: (String) -> Void
     var onBack: (() -> Void)?
     var onForward: (() -> Void)?
@@ -165,6 +166,15 @@ struct URLBarView: View {
                 .scaleEffect(0.5)
                 .padding(.leading, 6)
                 .opacity(isLoading ? 1 : 0)
+
+            Button(action: {
+                isPinned.toggle()
+                NSApp.windows.first?.level = isPinned ? .floating : .normal
+            }) {
+                Image(systemName: isPinned ? "pin.fill" : "pin.slash")
+            }
+            .buttonStyle(.plain)
+            .opacity(0.8)
         }
         .onChange(of: urlString) { newValue in
             tempURL = newValue // Sync tempURL with urlString
@@ -197,6 +207,7 @@ struct ContentView: View {
     @State private var urlHistory: [String] = ["https://www.google.com"]
     @State private var currentIndex: Int = 0
     @State private var isLoading = false
+    @State private var isPinned = false
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -207,6 +218,7 @@ struct ContentView: View {
                 URLBarView(
                     urlString: $urlString,
                     isLoading: $isLoading,
+                    isPinned: $isPinned,
                     onNavigate: { newURL in
                         updateHistory(newURL)
                     },
@@ -249,8 +261,13 @@ struct ContentView: View {
                         }
                         return nil
                     }
-                    if event.charactersIgnoringModifiers == "r" {
-                        urlString = urlHistory[currentIndex]
+                   if event.charactersIgnoringModifiers == "r" {
+                        if let currentURL = URL(string: urlString) {
+                            urlString = "about:blank"
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                urlString = currentURL.absoluteString
+                            }
+                        }
                         return nil
                     }
                 }
