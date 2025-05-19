@@ -72,8 +72,35 @@ struct BrowserView: NSViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-            // Allow all navigations
-            decisionHandler(.allow)
+            guard let url = navigationAction.request.url, navigationAction.navigationType == .linkActivated else {
+                decisionHandler(.allow)
+                return
+            }
+
+            // Inject JavaScript to check if the clicked link has target="_blank"
+            let js = """
+            (function() {
+                const allTargetElemnts = document.getElementsByTagName('a')
+
+                for (const targetElement of allTargetElemnts) {
+                    targetElement.target = '_self'
+                }
+            })();
+            """
+
+            webView.evaluateJavaScript(js) { (result, error) in
+                if let href = result as? String, !href.isEmpty {
+                    // Link has target="_blank", update urlString and cancel external navigation
+                    DispatchQueue.main.async {
+                        self.urlString.wrappedValue = href
+                        self.onURLChange(href)
+                    }
+                    decisionHandler(.cancel)
+                } else {
+                    // Normal link navigation, allow it
+                    decisionHandler(.allow)
+                }
+            }
         }
     }
 }
