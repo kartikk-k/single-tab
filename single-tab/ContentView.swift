@@ -5,8 +5,16 @@
 //  Created by kartik khorwal on 5/19/25.
 //
 
+
 import SwiftUI
 import WebKit
+
+// Utility extension to get the key window
+extension NSApplication {
+    static var keyWindow: NSWindow? {
+        return NSApplication.shared.windows.first { $0.isKeyWindow }
+    }
+}
 
 struct BrowserView: NSViewRepresentable {
     @Binding var urlString: String
@@ -169,7 +177,9 @@ struct URLBarView: View {
 
             Button(action: {
                 isPinned.toggle()
-                NSApp.windows.first?.level = isPinned ? .floating : .normal
+                if let window = NSApplication.keyWindow {
+                    window.level = isPinned ? .floating : .normal
+                }
             }) {
                 Image(systemName: isPinned ? "pin.fill" : "pin.slash")
             }
